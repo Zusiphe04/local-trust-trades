@@ -14,7 +14,224 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      gallery_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          listing_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          listing_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_images_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inquiries: {
+        Row: {
+          created_at: string
+          customer_email: string
+          customer_name: string
+          id: string
+          listing_id: string
+          message: string
+        }
+        Insert: {
+          created_at?: string
+          customer_email: string
+          customer_name: string
+          id?: string
+          listing_id: string
+          message: string
+        }
+        Update: {
+          created_at?: string
+          customer_email?: string
+          customer_name?: string
+          id?: string
+          listing_id?: string
+          message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listing_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          listing_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          listing_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          listing_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listing_events_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listings: {
+        Row: {
+          bio: string
+          business_name: string
+          category: string
+          cover_url: string | null
+          created_at: string
+          email: string | null
+          hours: string
+          id: string
+          is_featured: boolean
+          logo_url: string | null
+          phone: string | null
+          plan_type: string
+          rating: number
+          review_count: number
+          service_area: string
+          social_url: string | null
+          user_id: string | null
+          website_url: string | null
+        }
+        Insert: {
+          bio?: string
+          business_name: string
+          category: string
+          cover_url?: string | null
+          created_at?: string
+          email?: string | null
+          hours?: string
+          id?: string
+          is_featured?: boolean
+          logo_url?: string | null
+          phone?: string | null
+          plan_type?: string
+          rating?: number
+          review_count?: number
+          service_area?: string
+          social_url?: string | null
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Update: {
+          bio?: string
+          business_name?: string
+          category?: string
+          cover_url?: string | null
+          created_at?: string
+          email?: string | null
+          hours?: string
+          id?: string
+          is_featured?: boolean
+          logo_url?: string | null
+          phone?: string | null
+          plan_type?: string
+          rating?: number
+          review_count?: number
+          service_area?: string
+          social_url?: string | null
+          user_id?: string | null
+          website_url?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment: string
+          created_at: string
+          id: string
+          listing_id: string
+          provider_reply: string | null
+          rating: number
+          reviewer_id: string | null
+          reviewer_name: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          id?: string
+          listing_id: string
+          provider_reply?: string | null
+          rating: number
+          reviewer_id?: string | null
+          reviewer_name: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          id?: string
+          listing_id?: string
+          provider_reply?: string | null
+          rating?: number
+          reviewer_id?: string | null
+          reviewer_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_listing_id_fkey"
+            columns: ["listing_id"]
+            isOneToOne: false
+            referencedRelation: "listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
