@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +30,10 @@ function AuthPage() {
   const [checkEmail, setCheckEmail] = useState(false);
   const next = role === "provider" ? "/onboarding" : "/";
 
-  if (role === "provider") sessionStorage.setItem("lp_next", "/onboarding");
+  useEffect(() => {
+    if (role === "provider") sessionStorage.setItem("lp_next", "/onboarding");
+    else sessionStorage.removeItem("lp_next");
+  }, [role]);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
