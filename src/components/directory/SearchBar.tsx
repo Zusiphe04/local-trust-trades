@@ -3,9 +3,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { Search, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export function SearchBar({ initialQ = "", initialLoc = "", compact }: { initialQ?: string; initialLoc?: string; compact?: boolean }) {
-  const [q, setQ] = useState(initialQ);
-  const [loc, setLoc] = useState(initialLoc);
+export function SearchBar({ initialQ, initialLoc, compact }: { initialQ?: string | undefined; initialLoc?: string | undefined; compact?: boolean }) {
+  const [q, setQ] = useState(initialQ ?? "");
+  const [loc, setLoc] = useState(initialLoc ?? "");
   const navigate = useNavigate();
   return (
     <form

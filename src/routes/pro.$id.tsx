@@ -235,11 +235,11 @@ function Reviews({ listingId, ownerId, reviews }: { listingId: string; ownerId: 
                 const f = new FormData(form);
                 const name = String(f.get("rname")).trim();
                 const comment = String(f.get("comment")).trim();
-                if (!name || !comment) return toast.error("Add your name and a short comment.");
+                if (!name || !comment) { toast.error("Add your name and a short comment."); return; }
                 setBusy(true);
                 const { error } = await supabase.from("reviews").insert({ listing_id: listingId, reviewer_id: user.id, reviewer_name: name.slice(0, 80), rating, comment: comment.slice(0, 2000) });
                 setBusy(false);
-                if (error) return toast.error("Couldn't post your review.");
+                if (error) { toast.error("Couldn't post your review."); return; }
                 form.reset();
                 toast.success("Thanks — your review is live.");
                 qc.invalidateQueries({ queryKey: ["listing", listingId] });

@@ -43,7 +43,7 @@ export function ListingForm({
 
   async function pick(file: File | undefined, set: (u: string) => void) {
     if (!file) return;
-    if (!file.type.startsWith("image/")) return toast.error("Please choose an image.");
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image."); return; }
     try {
       set(await uploadMedia(userId, file));
     } catch {
@@ -72,7 +72,7 @@ export function ListingForm({
           cover_url: cover,
         };
         if (!v.business_name || !v.category || !v.phone || !v.service_area) {
-          return toast.error("Business name, category, phone and area served are required.");
+          { toast.error("Business name, category, phone and area served are required."); return; }
         }
         setBusy(true);
         try {
