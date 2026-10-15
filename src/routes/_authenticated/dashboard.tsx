@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PRO_PRICE, uploadMedia } from "@/lib/directory";
+import { PRO_PRICE, getUserRole } from "@/lib/directory";
 import { PlanCards } from "@/routes/for-pros";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -22,6 +22,9 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
       { property: "og:description", content: "Manage your LocalPro listing." },
     ],
   }),
+  beforeLoad: async ({ context }) => {
+    if ((await getUserRole(context.user.id)) !== "provider") throw redirect({ to: "/search" });
+  },
   component: Dashboard,
 });
 
@@ -31,6 +34,7 @@ function Dashboard() {
   const key = ["dashboard", user.id];
   const { data, isLoading } = useQuery({
     queryKey: key,
+    refetchInterval: 15000,
     queryFn: async () => {
       const { data: listing } = await supabase.from("listings").select("*").eq("user_id", user.id).maybeSingle();
       if (!listing) return { listing: null };
@@ -51,11 +55,10 @@ function Dashboard() {
   if (!data?.listing)
     return (
       <div className="mx-auto max-w-xl px-4 py-16">
-        <h1 className="text-2xl font-bold">Signed in as {user.email}</h1>
-        <p className="mt-2 text-muted-foreground">Looking for a pro? Start a search. Run a business? Create your free listing.</p>
+        <h1 className="text-2xl font-bold">Let's get your business listed</h1>
+        <p className="mt-2 text-muted-foreground">Create your profile to start getting quote requests and reviews.</p>
         <div className="mt-6 flex gap-2">
-          <Button asChild><Link to="/search">Find a pro</Link></Button>
-          <Button asChild variant="outline"><Link to="/onboarding">List my business</Link></Button>
+          <Button asChild><Link to="/onboarding">Create my listing</Link></Button>
         </div>
       </div>
     );
@@ -86,10 +89,10 @@ function Dashboard() {
 
       <Tabs defaultValue="leads" className="mt-8">
         <TabsList>
-          <TabsTrigger value="leads">Leads</TabsTrigger>
+          <TabsTrigger value="leads">Inquiries & Leads{inquiries.length ? ` (${inquiries.length})` : ""}</TabsTrigger>
           <TabsTrigger value="details">Business details</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
-          <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          <TabsTrigger value="reviews">Reviews{reviews.length ? ` (${reviews.length})` : ""}</TabsTrigger>
           <TabsTrigger value="plan">Plan</TabsTrigger>
         </TabsList>
 
@@ -253,7 +256,7 @@ function ReviewItem({ review, canReply, onChange }: { review: { id: string; revi
           <Button size="sm" onClick={async () => {
             const { error } = await supabase.from("reviews").update({ provider_reply: text.trim() || null }).eq("id", review.id);
             if (error) toast.error(error.message); else { toast.success("Reply posted."); onChange(); }
-          }}>Post reply</Button>
+          }}>{review.provider_reply ? "Update reply" : "Reply to review"}</Button>
         </div>
       ) : review.provider_reply ? (
         <p className="mt-2 border-l-2 border-primary pl-3 text-sm text-muted-foreground">{review.provider_reply}</p>

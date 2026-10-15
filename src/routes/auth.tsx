@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getUserRole } from "@/lib/directory";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,21 @@ function AuthPage() {
   const [role, setRole] = useState<"customer" | "provider">(search.provider ? "provider" : "customer");
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
-  const next = role === "provider" ? "/onboarding" : "/";
+  const next = role === "provider" ? "/onboarding" : "/search";
+
+  async function routeByRole(userId: string) {
+    const r = await getUserRole(userId);
+    const dest = sessionStorage.getItem("lp_next");
+    sessionStorage.removeItem("lp_next");
+    if (r === "provider") navigate({ to: dest === "/onboarding" ? "/onboarding" : "/dashboard", replace: true });
+    else if (dest === "/onboarding") navigate({ to: "/onboarding", replace: true });
+    else navigate({ to: "/search", replace: true });
+  }
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => { if (data.session) routeByRole(data.session.user.id); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (role === "provider") sessionStorage.setItem("lp_next", "/onboarding");
@@ -55,11 +70,9 @@ function AuthPage() {
         if (error) throw error;
         setCheckEmail(true);
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        const dest = sessionStorage.getItem("lp_next");
-        sessionStorage.removeItem("lp_next");
-        navigate({ to: dest === "/onboarding" ? "/onboarding" : "/dashboard" });
+        await routeByRole(data.user.id);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -69,12 +82,11 @@ function AuthPage() {
   }
 
   async function google() {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/auth` });
     if (r.error) { toast.error("Google sign-in failed"); return; }
     if (r.redirected) return;
-    const dest = sessionStorage.getItem("lp_next");
-    sessionStorage.removeItem("lp_next");
-    navigate({ to: dest === "/onboarding" ? "/onboarding" : "/dashboard" });
+    const { data } = await supabase.auth.getUser();
+    if (data.user) await routeByRole(data.user.id);
   }
 
   if (checkEmail)

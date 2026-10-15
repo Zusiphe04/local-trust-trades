@@ -1,4 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getUserRole } from "@/lib/directory";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/hooks/use-session";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 export function SiteHeader() {
   const { user } = useSession();
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  const { data: role } = useQuery({ queryKey: ["role", user?.id], queryFn: () => getUserRole(user!.id), enabled: !!user });
   return (
     <header className="border-b bg-card">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
@@ -22,13 +26,17 @@ export function SiteHeader() {
           </Button>
           {user ? (
             <>
-              <Button asChild variant="outline" size="sm">
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
+              {role === "provider" && (
+                <Button asChild variant="outline" size="sm">
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={async () => {
+                  await qc.cancelQueries();
+                  qc.clear();
                   await supabase.auth.signOut();
                   navigate({ to: "/", replace: true });
                 }}
