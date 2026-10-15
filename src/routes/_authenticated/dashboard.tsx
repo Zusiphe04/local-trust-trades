@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Eye, Phone, Inbox, Lock, Trash2 } from "lucide-react";
+import { Eye, Phone, Inbox, Lock, Trash2, Mail, MessageSquare, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ListingForm } from "@/components/directory/ListingForm";
 import { Stars, VerifiedBadge } from "@/components/directory/Stars";
@@ -99,16 +99,7 @@ function Dashboard() {
         <TabsContent value="leads" className="mt-4 space-y-4">
           {isPro ? <LeadChart events={events} /> : <Locked text="Daily lead analytics are included with Pro." />}
           <div className="space-y-3">
-            {inquiries.map((q) => (
-              <div key={q.id} className="rounded-md border bg-card p-4">
-                <div className="flex justify-between text-sm">
-                  <span className="font-semibold">{q.customer_name}</span>
-                  <span className="text-muted-foreground">{new Date(q.created_at).toLocaleString()}</span>
-                </div>
-                <a href={`mailto:${q.customer_email}`} className="text-sm text-primary">{q.customer_email}</a>
-                <p className="mt-2 text-sm">{q.message}</p>
-              </div>
-            ))}
+            {inquiries.map((q) => <LeadCard key={q.id} lead={q} businessName={listing.business_name} />)}
             {inquiries.length === 0 && <p className="text-sm text-muted-foreground">No quote requests yet. A complete profile with photos gets more of them.</p>}
           </div>
         </TabsContent>
@@ -151,6 +142,63 @@ function Dashboard() {
           <PlanCards onChoose={(p) => p === "pro" && !isPro && toast.info("Pro checkout is opening soon. We'll let you know.")} />
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+type Lead = { id: string; customer_name: string; customer_email: string; customer_phone: string | null; message: string; answers: unknown; photo_path: string | null; created_at: string };
+
+function LeadCard({ lead, businessName }: { lead: Lead; businessName: string }) {
+  const answers = (lead.answers && typeof lead.answers === "object" ? lead.answers : {}) as Record<string, string>;
+  const entries = Object.entries(answers);
+  const summary = entries.map(([k, v]) => `${k}: ${v}`).join(" | ");
+  const { data: photoUrl } = useQuery({
+    queryKey: ["lead-photo", lead.photo_path],
+    enabled: !!lead.photo_path,
+    staleTime: 30 * 60e3,
+    queryFn: async () => (await supabase.storage.from("listing-media").createSignedUrl(lead.photo_path!, 3600)).data?.signedUrl ?? null,
+  });
+  const first = lead.customer_name.split(" ")[0];
+  const job = answers["Job Type"] || answers["Task"] || "your job";
+  const quoteBody = `Hi ${first},\n\nThanks for reaching out to ${businessName} about ${job}.\n\nYour request: ${summary || lead.message}\n\nOur estimate: $___ \nEarliest availability: ___\n\nReply to this email to book, or call us anytime.\n\n— ${businessName}`;
+  const quoteHref = `mailto:${lead.customer_email}?subject=${encodeURIComponent(`Your quote from ${businessName}`)}&body=${encodeURIComponent(quoteBody)}`;
+  const pref = answers["Preferred Contact"];
+  return (
+    <div className="rounded-md border bg-card p-4">
+      <div className="flex flex-wrap justify-between gap-2 text-sm">
+        <span className="font-semibold">{lead.customer_name}</span>
+        <span className="text-muted-foreground">{new Date(lead.created_at).toLocaleString()}</span>
+      </div>
+      {entries.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {entries.map(([k, v]) => (
+            <span key={k} className="rounded-sm border bg-muted px-2 py-1 text-xs">
+              <span className="text-muted-foreground">{k}:</span> <span className="font-medium">{v}</span>
+            </span>
+          ))}
+        </div>
+      )}
+      {lead.message && lead.message !== summary && <p className="mt-3 text-sm">{lead.message}</p>}
+      {photoUrl && <a href={photoUrl} target="_blank" rel="noreferrer"><img src={photoUrl} alt="Customer job photo" className="mt-3 h-28 rounded-md border object-cover" /></a>}
+      <div className="mt-2 text-xs text-muted-foreground">
+        {lead.customer_email}{lead.customer_phone ? ` · ${lead.customer_phone}` : ""}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {lead.customer_phone && (
+          <Button asChild size="sm" variant={pref === "Call" ? "default" : "outline"}>
+            <a href={`tel:${lead.customer_phone}`}><Phone className="h-4 w-4" /> Call</a>
+          </Button>
+        )}
+        {lead.customer_phone && pref === "Text" && (
+          <Button asChild size="sm"><a href={`sms:${lead.customer_phone}`}><MessageSquare className="h-4 w-4" /> Text</a></Button>
+        )}
+        <Button asChild size="sm" variant={pref === "Email" ? "default" : "outline"}>
+          <a href={`mailto:${lead.customer_email}`}><Mail className="h-4 w-4" /> Email</a>
+        </Button>
+        <Button asChild size="sm" variant="secondary">
+          <a href={quoteHref}><Send className="h-4 w-4" /> Send Quick Quote</a>
+        </Button>
+      </div>
     </div>
   );
 }

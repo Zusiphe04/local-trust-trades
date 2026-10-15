@@ -45,28 +45,37 @@ export type Database = {
       }
       inquiries: {
         Row: {
+          answers: Json
           created_at: string
           customer_email: string
           customer_name: string
+          customer_phone: string | null
           id: string
           listing_id: string
           message: string
+          photo_path: string | null
         }
         Insert: {
+          answers?: Json
           created_at?: string
           customer_email: string
           customer_name: string
+          customer_phone?: string | null
           id?: string
           listing_id: string
           message: string
+          photo_path?: string | null
         }
         Update: {
+          answers?: Json
           created_at?: string
           customer_email?: string
           customer_name?: string
+          customer_phone?: string | null
           id?: string
           listing_id?: string
           message?: string
+          photo_path?: string | null
         }
         Relationships: [
           {
