@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PRO_PRICE, getUserRole } from "@/lib/directory";
+import { PRO_PRICE, getUserRole, uploadMedia } from "@/lib/directory";
 import { PlanCards } from "@/routes/for-pros";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
