@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useSession } from "@/hooks/use-session";
+import { QuoteWizard } from "@/components/directory/QuoteWizard";
 
 export const Route = createFileRoute("/pro/$id")({
   head: () => ({
@@ -144,47 +145,22 @@ function ProfilePage() {
               </Button>
             )}
           </div>
-          <InquiryForm listingId={l.id} />
+          <InquiryForm listingId={l.id} category={l.category} businessName={l.business_name} />
         </aside>
       </div>
     </div>
   );
 }
 
-function InquiryForm({ listingId }: { listingId: string }) {
-  const [sent, setSent] = useState(false);
-  const [busy, setBusy] = useState(false);
+function InquiryForm({ listingId, category, businessName }: { listingId: string; category: string; businessName: string }) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => { if (window.location.hash === "#inquiry") setOpen(true); }, []);
   return (
     <div id="inquiry" className="scroll-mt-24 rounded-md border bg-card p-5">
       <h2 className="font-semibold">Request a free quote</h2>
-      {sent ? (
-        <p className="mt-3 text-sm text-muted-foreground">Sent! The business will reply to your email, usually within a day.</p>
-      ) : (
-        <form
-          className="mt-3 space-y-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const f = new FormData(e.currentTarget);
-            const name = String(f.get("name")).trim();
-            const email = String(f.get("email")).trim();
-            const message = String(f.get("message")).trim();
-            if (!name || !/^\S+@\S+\.\S+$/.test(email) || message.length < 10) {
-              toast.error("Add your name, a valid email and a few details about the job.");
-              return;
-            }
-            setBusy(true);
-            const { error } = await supabase.from("inquiries").insert({ listing_id: listingId, customer_name: name.slice(0, 100), customer_email: email.slice(0, 255), message: message.slice(0, 2000) });
-            setBusy(false);
-            if (error) toast.error("Couldn't send — please try again.");
-            else setSent(true);
-          }}
-        >
-          <div><Label htmlFor="name">Your name</Label><Input id="name" name="name" maxLength={100} /></div>
-          <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" maxLength={255} /></div>
-          <div><Label htmlFor="message">What do you need done?</Label><Textarea id="message" name="message" rows={4} maxLength={2000} placeholder="e.g. Kitchen sink leaking under the cabinet, available weekday mornings." /></div>
-          <Button type="submit" className="w-full" disabled={busy}>{busy ? "Sending…" : "Send inquiry"}</Button>
-        </form>
-      )}
+      <p className="mt-1 text-sm text-muted-foreground">Answer a few quick questions so {businessName} can price your job accurately.</p>
+      <Button className="mt-4 w-full" onClick={() => setOpen(true)}>Get a quote</Button>
+      <QuoteWizard open={open} onOpenChange={setOpen} listingId={listingId} category={category} businessName={businessName} />
     </div>
   );
 }
