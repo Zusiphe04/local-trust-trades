@@ -42,12 +42,11 @@ export function initials(name: string) {
     .join("");
 }
 
-import { supabase as _sb } from "@/integrations/supabase/client";
 /** Providers (role or owning a listing) go to /dashboard; customers go to /search. */
 export async function getUserRole(userId: string): Promise<"provider" | "customer"> {
   const [{ data: p }, { data: l }] = await Promise.all([
-    _sb.from("profiles").select("role").eq("user_id", userId).maybeSingle(),
-    _sb.from("listings").select("id").eq("user_id", userId).maybeSingle(),
+    supabase.from("profiles").select("role").eq("user_id", userId).maybeSingle(),
+    supabase.from("listings").select("id").eq("user_id", userId).maybeSingle(),
   ]);
   return p?.role === "provider" || l ? "provider" : "customer";
 }
