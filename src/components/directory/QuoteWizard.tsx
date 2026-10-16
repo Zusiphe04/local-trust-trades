@@ -49,7 +49,7 @@ export function QuoteWizard({ open, onOpenChange, listingId, category, businessN
 
   const reset = () => { setStep(0); setAnswers({}); setPhoto(null); setC({ name: "", email: "", phone: "", message: "" }); setSent(false); };
 
-  async function submit() {
+  async function submit(): Promise<unknown> {
     const name = c.name.trim(), email = c.email.trim(), phone = c.phone.trim();
     if (!name || !/^\S+@\S+\.\S+$/.test(email)) return toast.error("Add your name and a valid email.");
     if ((answers["Preferred Contact"] === "Call" || answers["Preferred Contact"] === "Text") && !/^[+\d][\d\s().-]{6,}$/.test(phone))
