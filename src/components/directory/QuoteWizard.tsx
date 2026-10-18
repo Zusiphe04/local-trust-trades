@@ -8,20 +8,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { saPhoneSchema } from "@/lib/localization";
 
 type Q = { key: string; label: string; options?: string[]; kind?: "text" | "photo"; optional?: boolean };
 
 function categoryQuestions(category: string): Q[] {
-  if (category === "Plumbing")
+  if (category === "Plumber")
     return [
       { key: "Job Type", label: "What's the job?", options: ["Leak", "Installation", "Clog", "Other"] },
       { key: "Urgency", label: "How soon do you need it?", options: ["Emergency", "Within 24h", "Flexible"] },
       { key: "Property", label: "Property type", options: ["Home", "Commercial"] },
     ];
-  if (category === "Electrical" || category === "Handyman")
+  if (category === "Electrician" || category === "Handyman" || category === "Solar & Inverter Installer")
     return [
       { key: "Task", label: "What do you need done?", kind: "text" },
-      { key: "Budget", label: "Estimated budget", options: ["Under $100", "$100–$500", "$500–$1,000", "$1,000+", "Not sure"] },
+      { key: "Budget", label: "Estimated budget", options: ["Under R500", "R500–R2,000", "R2,000–R5,000", "R5,000+", "Not sure"] },
       { key: "photo", label: "Add a photo of the job (optional)", kind: "photo", optional: true },
     ];
   return [];
@@ -43,7 +44,7 @@ export function QuoteWizard({ open, onOpenChange, listingId, category, businessN
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const isLast = step === steps.length - 1;
-  const current = steps[step]!;
+  const current = steps[step] ?? [];
 
   const stepDone = current.every((q) => q.optional || (q.kind === "photo" ? true : (answers[q.key] ?? "").trim().length > 0));
 
@@ -52,8 +53,8 @@ export function QuoteWizard({ open, onOpenChange, listingId, category, businessN
   async function submit(): Promise<unknown> {
     const name = c.name.trim(), email = c.email.trim(), phone = c.phone.trim();
     if (!name || !/^\S+@\S+\.\S+$/.test(email)) return toast.error("Add your name and a valid email.");
-    if ((answers["Preferred Contact"] === "Call" || answers["Preferred Contact"] === "Text") && !/^[+\d][\d\s().-]{6,}$/.test(phone))
-      return toast.error("Add a phone number so they can call or text you.");
+    if ((phone || answers["Preferred Contact"] !== "Email") && !saPhoneSchema.safeParse(phone).success)
+      return toast.error("Add a South African phone number, e.g. 082 123 4567.");
     setBusy(true);
     let photo_path: string | null = null;
     if (photo) {
@@ -110,13 +111,13 @@ export function QuoteWizard({ open, onOpenChange, listingId, category, businessN
                   {q.options ? (
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                       {q.options.map((o) => (
-                        <button
+                        <Button variant="outline"
                           key={o}
                           type="button"
                           onClick={() => setAnswers({ ...answers, [q.key]: o })}
-                          className={cn("rounded-md border px-3 py-2.5 text-sm font-medium transition-colors hover:border-primary",
+                          className={cn("h-auto whitespace-normal rounded-md border px-3 py-2.5 text-sm font-medium transition-colors hover:border-primary",
                             answers[q.key] === o && "border-primary bg-primary/10 text-primary")}
-                        >{o}</button>
+                        >{o}</Button>
                       ))}
                     </div>
                   ) : q.kind === "photo" ? (

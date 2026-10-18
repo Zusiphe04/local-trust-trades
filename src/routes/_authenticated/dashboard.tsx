@@ -88,7 +88,7 @@ function Dashboard() {
       </div>
 
       <Tabs defaultValue="leads" className="mt-8">
-        <TabsList>
+        <TabsList className="h-auto w-full flex-wrap justify-start gap-1">
           <TabsTrigger value="leads">Inquiries & Leads{inquiries.length ? ` (${inquiries.length})` : ""}</TabsTrigger>
           <TabsTrigger value="details">Business details</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
@@ -135,7 +135,7 @@ function Dashboard() {
             <h2 className="text-lg font-bold">You're on {isPro ? "Pro" : "Basic"}.</h2>
             {!isPro && (
               <p className="mt-1 text-sm text-muted-foreground">
-                Pro is ${PRO_PRICE}/month. Card checkout is being switched on — the upgrade button will go live here shortly.
+                Pro is R{PRO_PRICE}/month. Card checkout is not available yet. You can keep using Basic for free.
               </p>
             )}
           </div>
@@ -156,11 +156,11 @@ function LeadCard({ lead, businessName }: { lead: Lead; businessName: string }) 
     queryKey: ["lead-photo", lead.photo_path],
     enabled: !!lead.photo_path,
     staleTime: 30 * 60e3,
-    queryFn: async () => (await supabase.storage.from("listing-media").createSignedUrl(lead.photo_path!, 3600)).data?.signedUrl ?? null,
+    queryFn: async () => lead.photo_path ? (await supabase.storage.from("listing-media").createSignedUrl(lead.photo_path, 3600)).data?.signedUrl ?? null : null,
   });
   const first = lead.customer_name.split(" ")[0];
   const job = answers["Job Type"] || answers["Task"] || "your job";
-  const quoteBody = `Hi ${first},\n\nThanks for reaching out to ${businessName} about ${job}.\n\nYour request: ${summary || lead.message}\n\nOur estimate: $___ \nEarliest availability: ___\n\nReply to this email to book, or call us anytime.\n\n— ${businessName}`;
+  const quoteBody = `Hi ${first},\n\nThanks for reaching out to ${businessName} about ${job}.\n\nYour request: ${summary || lead.message}\n\nOur estimate: R___ \nEarliest availability: ___\n\nReply to this email to book, or call us anytime.\n\n— ${businessName}`;
   const quoteHref = `mailto:${lead.customer_email}?subject=${encodeURIComponent(`Your quote from ${businessName}`)}&body=${encodeURIComponent(quoteBody)}`;
   const pref = answers["Preferred Contact"];
   return (
