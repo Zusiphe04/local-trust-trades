@@ -55,6 +55,8 @@
   --color-verified: var(--verified);
   --color-verified-foreground: var(--verified-foreground);
   --color-featured: var(--featured);
+  --color-hero-overlay: var(--hero-overlay);
+  --color-hero-foreground: var(--hero-foreground);
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
   --color-sidebar: var(--sidebar);
@@ -69,6 +71,8 @@
 
 :root {
   --radius: 0.375rem;
+  --hero-overlay: oklch(0.208 0.042 265.755);
+  --hero-foreground: oklch(0.99 0 0);
   --background: oklch(0.985 0.002 247);
   --foreground: oklch(0.208 0.042 265.755);
   --card: oklch(1 0 0);
@@ -154,6 +158,9 @@
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.02em;
+    letter-spacing: 0;
   }
 }
+
+.showcase-half { width: 200%; max-width: none; height: 100%; object-fit: cover; }
+.showcase-half-right { transform: translateX(-50%); }
