@@ -4,17 +4,7 @@ import type { Database } from "@/integrations/supabase/types";
 export type Listing = Database["public"]["Tables"]["listings"]["Row"];
 export type Review = Database["public"]["Tables"]["reviews"]["Row"];
 
-export const CATEGORIES = [
-  "Plumbing",
-  "Electrical",
-  "Cleaning",
-  "Handyman",
-  "Auto Repair",
-  "Beauty",
-  "Tutoring",
-] as const;
-
-export const PRO_PRICE = 29;
+export { CATEGORIES, PRO_PRICE, PRO_ANNUAL_PRICE } from "./localization";
 
 export function trackEvent(listingId: string, type: "view" | "phone_click" | "email_click" | "website_click") {
   void supabase.from("listing_events").insert({ listing_id: listingId, event_type: type });
@@ -38,15 +28,13 @@ export function initials(name: string) {
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
-    .map((w) => w[0]!.toUpperCase())
+    .map((w) => w[0]?.toUpperCase() ?? "")
     .join("");
 }
 
 /** Providers (role or owning a listing) go to /dashboard; customers go to /search. */
 export async function getUserRole(userId: string): Promise<"provider" | "customer"> {
-  const [{ data: p }, { data: l }] = await Promise.all([
-    supabase.from("profiles").select("role").eq("user_id", userId).maybeSingle(),
-    supabase.from("listings").select("id").eq("user_id", userId).maybeSingle(),
-  ]);
-  return p?.role === "provider" || l ? "provider" : "customer";
+  const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  return data?.role === "provider" ? "provider" : "customer";
 }

@@ -30,7 +30,7 @@ export function SearchBar({ initialQ, initialLoc, compact }: { initialQ?: string
         <input
           value={loc}
           onChange={(e) => setLoc(e.target.value)}
-          placeholder="City or ZIP code"
+          placeholder="City or postal code"
           aria-label="Location"
           className="w-full bg-transparent text-base outline-none placeholder:text-muted-foreground"
         />

@@ -1,7 +1,12 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useSession } from "@/hooks/use-session";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PRO_PRICE } from "@/lib/directory";
+import { PRO_PRICE, PRO_ANNUAL_PRICE, getUserRole } from "@/lib/directory";
+import { CUSTOMER_FEE_NOTICE, canAccessProviderPages } from "@/lib/localization";
 
 export const Route = createFileRoute("/for-pros")({
   head: () => ({
@@ -28,9 +33,19 @@ export const PLAN_FEATURES: { label: string; free: boolean; pro: boolean }[] = [
 ];
 
 function ForPros() {
+  const { user, loading } = useSession();
+  const navigate = useNavigate();
+  const { data: role } = useQuery({ queryKey: ["role", user?.id], queryFn: () => user ? getUserRole(user.id) : Promise.resolve("customer"), enabled: !!user });
+  useEffect(() => {
+    if (user && role && !canAccessProviderPages(role)) {
+      toast.info(CUSTOMER_FEE_NOTICE, { id: "customer-fees", duration: 10000 });
+      void navigate({ to: "/", replace: true });
+    }
+  }, [user, role, navigate]);
+  if (loading || (user && role !== "provider")) return null;
   return (
     <div className="mx-auto max-w-5xl px-4 py-16">
-      <h1 className="max-w-2xl text-4xl font-bold">Get more local jobs. Pay only if you want top placement.</h1>
+      <h1 className="max-w-2xl text-4xl font-bold">LocalPro for South African businesses</h1>
       <p className="mt-3 max-w-2xl text-lg text-muted-foreground">Customers in your area are already searching. Set up your listing in about five minutes.</p>
       <PlanCards />
     </div>
@@ -51,7 +66,8 @@ export function PlanCards({ onChoose }: { onChoose?: (p: "free" | "pro") => void
             {p.id === "pro" && <span className="rounded-sm bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">Most leads</span>}
           </div>
           <p className="mt-1 text-sm text-muted-foreground">{p.blurb}</p>
-          <p className="mt-4"><span className="font-display text-4xl font-bold">${p.price}</span><span className="text-muted-foreground">/mo</span></p>
+          <p className="mt-4"><span className="font-display text-4xl font-bold">R{p.price}</span><span className="text-muted-foreground"> / month</span></p>
+          {p.id === "pro" && <p className="mt-1 text-sm text-muted-foreground">or R{PRO_ANNUAL_PRICE.toLocaleString("en-ZA")} / year</p>}
           <ul className="mt-6 flex-1 space-y-2 text-sm">
             {PLAN_FEATURES.map((f) => {
               const on = p.id === "pro" ? f.pro : f.free;

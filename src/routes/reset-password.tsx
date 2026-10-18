@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getUserRole } from "@/lib/directory";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({
@@ -34,7 +35,9 @@ function Reset() {
           setBusy(false);
           if (error) { toast.error(error.message); return; }
           toast.success("Password updated.");
-          navigate({ to: "/dashboard" });
+          const { data } = await supabase.auth.getUser();
+          const role = data.user ? await getUserRole(data.user.id) : "customer";
+          navigate({ to: role === "provider" ? "/dashboard" : "/search" });
         }}
       >
         <Label htmlFor="pw">New password</Label>

@@ -91,9 +91,9 @@ export function ListingForm({
             <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
           </Select>
         </div>
-        <div><Label htmlFor="service_area">Area served (city + ZIP) *</Label><Input id="service_area" name="service_area" placeholder="Austin, TX 78701" defaultValue={initial?.service_area} /></div>
+        <div><Label htmlFor="service_area">Area served (city + postal code) *</Label><Input id="service_area" name="service_area" placeholder="Cape Town, 8001" maxLength={120} defaultValue={initial?.service_area} /></div>
         <div className="sm:col-span-2"><Label htmlFor="bio">About your business</Label><Textarea id="bio" name="bio" rows={5} defaultValue={initial?.bio} placeholder="What you do, how long you've done it, and why customers pick you." /></div>
-        <div><Label htmlFor="phone">Phone *</Label><Input id="phone" name="phone" type="tel" defaultValue={initial?.phone ?? ""} /></div>
+        <div><Label htmlFor="phone">Phone *</Label><Input id="phone" name="phone" type="tel" placeholder="+27 82 123 4567" maxLength={40} defaultValue={initial?.phone ?? ""} /></div>
         <div><Label htmlFor="hours">Operating hours</Label><Input id="hours" name="hours" defaultValue={initial?.hours ?? "Mon–Fri 8:00–18:00"} /></div>
       </div>
 

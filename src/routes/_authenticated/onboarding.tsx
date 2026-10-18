@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link, redirect } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PlanCards } from "@/routes/for-pros";
 import { ListingForm } from "@/components/directory/ListingForm";
 import { Button } from "@/components/ui/button";
-import { PRO_PRICE } from "@/lib/directory";
+import { PRO_PRICE, getUserRole } from "@/lib/directory";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
   head: () => ({
@@ -18,6 +18,9 @@ export const Route = createFileRoute("/_authenticated/onboarding")({
     ],
   }),
   component: Onboarding,
+  beforeLoad: async ({ context }) => {
+    if (await getUserRole(context.user.id) !== "provider") throw redirect({ to: "/search" });
+  },
 });
 
 function Onboarding() {
@@ -59,7 +62,7 @@ function Onboarding() {
 
       {step === 2 && (
         <div className="mt-8 max-w-xl rounded-md border bg-card p-6">
-          <h1 className="text-2xl font-bold">Pro — ${PRO_PRICE}/month</h1>
+          <h1 className="text-2xl font-bold">Pro — R{PRO_PRICE}/month</h1>
           <p className="mt-2 text-muted-foreground">
             Card checkout for Pro is being switched on. For now we'll create your listing on Basic — you can upgrade to Pro from your dashboard as soon as checkout opens, and nothing you enter will be lost.
           </p>
@@ -85,7 +88,6 @@ function Onboarding() {
                   toast.error(error.message);
                   return;
                 }
-                await supabase.from("profiles").update({ role: "provider" }).eq("user_id", user.id);
                 toast.success(plan === "pro" ? "You're live on Basic. Upgrade to Pro anytime." : "You're live!");
                 navigate({ to: "/dashboard" });
               }}

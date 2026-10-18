@@ -9,7 +9,7 @@ export function SiteHeader() {
   const { user } = useSession();
   const navigate = useNavigate();
   const qc = useQueryClient();
-  const { data: role } = useQuery({ queryKey: ["role", user?.id], queryFn: () => getUserRole(user!.id), enabled: !!user });
+  const { data: role } = useQuery({ queryKey: ["role", user?.id], queryFn: () => user ? getUserRole(user.id) : Promise.resolve("customer"), enabled: !!user });
   return (
     <header className="border-b bg-card">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
@@ -21,9 +21,9 @@ export function SiteHeader() {
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
             <Link to="/search">Browse pros</Link>
           </Button>
-          <Button asChild variant="ghost" size="sm">
+          {(!user || role === "provider") && <Button asChild variant="ghost" size="sm">
             <Link to="/for-pros">For pros</Link>
-          </Button>
+          </Button>}
           {user ? (
             <>
               {role === "provider" && (
@@ -62,9 +62,15 @@ export function SiteFooter() {
         <span>© {new Date().getFullYear()} LocalPro. Real reviews from real customers.</span>
         <span className="flex gap-4">
           <Link to="/search" className="hover:text-foreground">Find a pro</Link>
-          <Link to="/for-pros" className="hover:text-foreground">List your business</Link>
+          <ProviderFooterLink />
         </span>
       </div>
     </footer>
   );
+}
+
+function ProviderFooterLink() {
+  const { user } = useSession();
+  const { data: role } = useQuery({ queryKey: ["role", user?.id], queryFn: () => user ? getUserRole(user.id) : Promise.resolve("customer"), enabled: !!user });
+  return !user || role === "provider" ? <Link to="/for-pros" className="hover:text-foreground">List your business</Link> : null;
 }

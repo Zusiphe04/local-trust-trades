@@ -8,6 +8,7 @@ import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signupSchema } from "@/lib/localization";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ provider: z.boolean().optional(), mode: z.enum(["signin", "signup"]).optional() }),
@@ -29,14 +30,22 @@ function AuthPage() {
   const [role, setRole] = useState<"customer" | "provider">(search.provider ? "provider" : "customer");
   const [busy, setBusy] = useState(false);
   const [checkEmail, setCheckEmail] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const passwordsMatch = password.length >= 8 && password === confirmPassword;
   const next = role === "provider" ? "/onboarding" : "/search";
 
   async function routeByRole(userId: string) {
+    const pendingRole = sessionStorage.getItem("lp_registration_role");
+    if (pendingRole === "provider" || pendingRole === "customer") {
+      const { error } = await supabase.rpc("complete_account_registration", { account_role: pendingRole });
+      if (error) { toast.error("Couldn't finish account setup. Please try again."); return; }
+      sessionStorage.removeItem("lp_registration_role");
+    }
     const r = await getUserRole(userId);
     const dest = sessionStorage.getItem("lp_next");
     sessionStorage.removeItem("lp_next");
     if (r === "provider") navigate({ to: dest === "/onboarding" ? "/onboarding" : "/dashboard", replace: true });
-    else if (dest === "/onboarding") navigate({ to: "/onboarding", replace: true });
     else navigate({ to: "/search", replace: true });
   }
 
@@ -55,6 +64,11 @@ function AuthPage() {
     const f = new FormData(e.currentTarget);
     const email = String(f.get("email")).trim();
     const password = String(f.get("password") ?? "");
+    if (mode === "signup") {
+      const result = signupSchema.safeParse({ email, password, confirmPassword: String(f.get("confirmPassword") ?? "") });
+      if (!result.success) { toast.error(result.error.issues[0]?.message ?? "Check your account details."); return; }
+      sessionStorage.setItem("lp_registration_role", role);
+    }
     setBusy(true);
     try {
       if (mode === "forgot") {
@@ -65,7 +79,7 @@ function AuthPage() {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin + next, data: { role } },
+           options: { emailRedirectTo: `${window.location.origin}/auth` },
         });
         if (error) throw error;
         setCheckEmail(true);
@@ -82,6 +96,7 @@ function AuthPage() {
   }
 
   async function google() {
+    if (mode === "signup") sessionStorage.setItem("lp_registration_role", role);
     const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: `${window.location.origin}/auth` });
     if (r.error) { toast.error("Google sign-in failed"); return; }
     if (r.redirected) return;
@@ -105,15 +120,15 @@ function AuthPage() {
       {mode === "signup" && (
         <div className="mt-5 grid grid-cols-2 gap-2">
           {(["customer", "provider"] as const).map((r) => (
-            <button
+            <Button variant="outline"
               key={r}
               type="button"
               onClick={() => setRole(r)}
-              className={`rounded-md border p-3 text-left text-sm ${role === r ? "border-primary bg-accent" : "bg-card"}`}
+              className={`h-auto flex-col items-start whitespace-normal p-3 text-left text-sm ${role === r ? "border-primary bg-accent" : "bg-card"}`}
             >
               <span className="block font-semibold">{r === "customer" ? "I need a pro" : "I'm a pro"}</span>
               <span className="text-muted-foreground">{r === "customer" ? "Browse, review, contact" : "Get listed, get leads"}</span>
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -127,9 +142,14 @@ function AuthPage() {
         <form onSubmit={submit} className="space-y-3">
           <div><Label htmlFor="email">Email</Label><Input id="email" name="email" type="email" required /></div>
           {mode !== "forgot" && (
-            <div><Label htmlFor="password">Password</Label><Input id="password" name="password" type="password" minLength={8} required /></div>
+            <div><Label htmlFor="password">Password</Label><Input id="password" name="password" type="password" minLength={8} maxLength={128} autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
           )}
-          <Button type="submit" className="w-full" disabled={busy}>
+          {mode === "signup" && <div>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input id="confirmPassword" name="confirmPassword" type="password" minLength={8} maxLength={128} autoComplete="new-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} aria-invalid={!!confirmPassword && !passwordsMatch} aria-describedby="password-match" required />
+            <p id="password-match" role="status" className={`mt-1 text-xs ${confirmPassword && !passwordsMatch ? "text-destructive" : "text-primary"}`}>{confirmPassword ? passwordsMatch ? "Passwords match." : "Passwords must match and contain at least 8 characters." : "Repeat your password."}</p>
+          </div>}
+          <Button type="submit" className="w-full" disabled={busy || (mode === "signup" && !passwordsMatch)}>
             {mode === "signup" ? "Create account" : mode === "forgot" ? "Send reset link" : "Sign in"}
           </Button>
         </form>
