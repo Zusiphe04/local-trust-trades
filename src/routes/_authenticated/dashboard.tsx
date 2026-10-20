@@ -2,15 +2,19 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Eye, Phone, Inbox, Lock, Trash2, Mail, MessageSquare, Send } from "lucide-react";
+import { Eye, Phone, Inbox, Lock, Trash2, Mail, MessageSquare, Send, CreditCard, Landmark, QrCode } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ListingForm } from "@/components/directory/ListingForm";
 import { Stars, VerifiedBadge } from "@/components/directory/Stars";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PRO_PRICE, getUserRole, uploadMedia } from "@/lib/directory";
+import { PRO_PRICE, PRO_ANNUAL_PRICE, getUserRole, uploadMedia, type Listing } from "@/lib/directory";
+import { cancelSubscription } from "@/lib/billing.functions";
 import { PlanCards } from "@/routes/for-pros";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -93,7 +97,8 @@ function Dashboard() {
           <TabsTrigger value="details">Business details</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
           <TabsTrigger value="reviews">Reviews{reviews.length ? ` (${reviews.length})` : ""}</TabsTrigger>
-          <TabsTrigger value="plan">Plan</TabsTrigger>
+          <TabsTrigger value="billing">Billing & Subscription</TabsTrigger>
+          <TabsTrigger value="payments">Payment options</TabsTrigger>
         </TabsList>
 
         <TabsContent value="leads" className="mt-4 space-y-4">
