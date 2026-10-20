@@ -294,7 +294,19 @@ function Gallery({ userId, listingId, isPro, images, onChange }: { userId: strin
 }
 
 function ReviewItem({ review, canReply, onChange }: { review: { id: string; reviewer_name: string; rating: number; comment: string; provider_reply: string | null }; canReply: boolean; onChange: () => void }) {
-...
+  const [text, setText] = useState(review.provider_reply ?? "");
+  return (
+    <div className="rounded-md border bg-card p-4">
+      <div className="flex items-center gap-2"><span className="font-medium">{review.reviewer_name}</span><Stars value={review.rating} size={14} /></div>
+      <p className="mt-1 text-sm">{review.comment}</p>
+      {canReply ? (
+        <div className="mt-3 space-y-2">
+          <Textarea rows={2} value={text} maxLength={1000} onChange={(e) => setText(e.target.value)} placeholder="Write a public reply…" />
+          <Button size="sm" onClick={async () => {
+            const { error } = await supabase.from("reviews").update({ provider_reply: text.trim() || null }).eq("id", review.id);
+            if (error) toast.error(error.message); else { toast.success("Reply posted."); onChange(); }
+          }}>{review.provider_reply ? "Update reply" : "Reply to review"}</Button>
+        </div>
       ) : review.provider_reply ? (
         <p className="mt-2 border-l-2 border-primary pl-3 text-sm text-muted-foreground">{review.provider_reply}</p>
       ) : null}
