@@ -118,7 +118,14 @@ export type Database = {
       }
       listings: {
         Row: {
+          accepts_card: boolean
+          accepts_cash: boolean
+          accepts_eft: boolean
+          accepts_snapscan: boolean
+          account_number: string | null
+          bank_name: string | null
           bio: string
+          branch_code: string | null
           business_name: string
           category: string
           cover_url: string | null
@@ -128,17 +135,30 @@ export type Database = {
           id: string
           is_featured: boolean
           logo_url: string | null
+          next_billing_date: string | null
+          payfast_link: string | null
+          payment_method_label: string | null
+          payment_reference: string | null
           phone: string | null
           plan_type: string
           rating: number
           review_count: number
           service_area: string
+          snapscan_qr_url: string | null
           social_url: string | null
+          subscription_status: string
           user_id: string | null
           website_url: string | null
         }
         Insert: {
+          accepts_card?: boolean
+          accepts_cash?: boolean
+          accepts_eft?: boolean
+          accepts_snapscan?: boolean
+          account_number?: string | null
+          bank_name?: string | null
           bio?: string
+          branch_code?: string | null
           business_name: string
           category: string
           cover_url?: string | null
@@ -148,17 +168,30 @@ export type Database = {
           id?: string
           is_featured?: boolean
           logo_url?: string | null
+          next_billing_date?: string | null
+          payfast_link?: string | null
+          payment_method_label?: string | null
+          payment_reference?: string | null
           phone?: string | null
           plan_type?: string
           rating?: number
           review_count?: number
           service_area?: string
+          snapscan_qr_url?: string | null
           social_url?: string | null
+          subscription_status?: string
           user_id?: string | null
           website_url?: string | null
         }
         Update: {
+          accepts_card?: boolean
+          accepts_cash?: boolean
+          accepts_eft?: boolean
+          accepts_snapscan?: boolean
+          account_number?: string | null
+          bank_name?: string | null
           bio?: string
+          branch_code?: string | null
           business_name?: string
           category?: string
           cover_url?: string | null
@@ -168,12 +201,18 @@ export type Database = {
           id?: string
           is_featured?: boolean
           logo_url?: string | null
+          next_billing_date?: string | null
+          payfast_link?: string | null
+          payment_method_label?: string | null
+          payment_reference?: string | null
           phone?: string | null
           plan_type?: string
           rating?: number
           review_count?: number
           service_area?: string
+          snapscan_qr_url?: string | null
           social_url?: string | null
+          subscription_status?: string
           user_id?: string | null
           website_url?: string | null
         }

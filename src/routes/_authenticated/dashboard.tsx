@@ -2,15 +2,19 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Eye, Phone, Inbox, Lock, Trash2, Mail, MessageSquare, Send } from "lucide-react";
+import { Eye, Phone, Inbox, Lock, Trash2, Mail, MessageSquare, Send, CreditCard, Landmark, QrCode } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ListingForm } from "@/components/directory/ListingForm";
 import { Stars, VerifiedBadge } from "@/components/directory/Stars";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PRO_PRICE, getUserRole, uploadMedia } from "@/lib/directory";
+import { PRO_PRICE, PRO_ANNUAL_PRICE, getUserRole, uploadMedia, type Listing } from "@/lib/directory";
+import { cancelSubscription } from "@/lib/billing.functions";
 import { PlanCards } from "@/routes/for-pros";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -93,7 +97,8 @@ function Dashboard() {
           <TabsTrigger value="details">Business details</TabsTrigger>
           <TabsTrigger value="photos">Photos</TabsTrigger>
           <TabsTrigger value="reviews">Reviews{reviews.length ? ` (${reviews.length})` : ""}</TabsTrigger>
-          <TabsTrigger value="plan">Plan</TabsTrigger>
+          <TabsTrigger value="billing">Billing & Subscription</TabsTrigger>
+          <TabsTrigger value="payments">Payment options</TabsTrigger>
         </TabsList>
 
         <TabsContent value="leads" className="mt-4 space-y-4">
@@ -130,16 +135,12 @@ function Dashboard() {
           {reviews.length === 0 && <p className="text-sm text-muted-foreground">No reviews yet. Ask your happy customers to leave one.</p>}
         </TabsContent>
 
-        <TabsContent value="plan" className="mt-4">
-          <div className="rounded-md border bg-card p-6">
-            <h2 className="text-lg font-bold">You're on {isPro ? "Pro" : "Basic"}.</h2>
-            {!isPro && (
-              <p className="mt-1 text-sm text-muted-foreground">
-                Pro is R{PRO_PRICE}/month. Card checkout is not available yet. You can keep using Basic for free.
-              </p>
-            )}
-          </div>
-          <PlanCards onChoose={(p) => p === "pro" && !isPro && toast.info("Pro checkout is opening soon. We'll let you know.")} />
+        <TabsContent value="billing" className="mt-4">
+          <BillingTab listing={listing} isPro={isPro} onChange={refresh} />
+        </TabsContent>
+
+        <TabsContent value="payments" className="mt-4">
+          <PaymentOptionsForm userId={user.id} listing={listing} onSaved={refresh} />
         </TabsContent>
       </Tabs>
     </div>
@@ -310,5 +311,174 @@ function ReviewItem({ review, canReply, onChange }: { review: { id: string; revi
         <p className="mt-2 border-l-2 border-primary pl-3 text-sm text-muted-foreground">{review.provider_reply}</p>
       ) : null}
     </div>
+  );
+}
+
+function BillingTab({ listing, isPro, onChange }: { listing: Listing; isPro: boolean; onChange: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const status = listing.subscription_status === "active" ? "Active" : listing.subscription_status === "cancelled" ? "Cancelled" : isPro ? "Active" : "No subscription";
+  const nextBilling = listing.next_billing_date ? new Date(listing.next_billing_date).toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" }) : "—";
+
+  async function cancel() {
+    setBusy(true);
+    try {
+      await cancelSubscription();
+      toast.success("Subscription cancelled. You're on the free Basic plan now.");
+      onChange();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't cancel — please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-md border bg-card p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <CreditCard className="h-5 w-5 text-primary" /> Billing & Subscription
+          </h2>
+          {isPro && <VerifiedBadge />}
+        </div>
+        <dl className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-md border bg-muted p-4">
+            <dt className="text-xs text-muted-foreground">Current plan</dt>
+            <dd className="mt-1 font-semibold">{isPro ? `Pro — R${PRO_PRICE}/month` : "Basic — R0/month"}</dd>
+          </div>
+          <div className="rounded-md border bg-muted p-4">
+            <dt className="text-xs text-muted-foreground">Status</dt>
+            <dd className="mt-1 font-semibold">{status}</dd>
+          </div>
+          <div className="rounded-md border bg-muted p-4">
+            <dt className="text-xs text-muted-foreground">Next billing date</dt>
+            <dd className="mt-1 font-semibold">{isPro ? nextBilling : "—"}</dd>
+          </div>
+        </dl>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Payment method on file: <span className="font-medium text-foreground">{listing.payment_method_label ?? "None yet"}</span>
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {!isPro && (
+            <Button onClick={() => toast.info(`Secure card checkout (R${PRO_PRICE}/month or R${PRO_ANNUAL_PRICE.toLocaleString("en-ZA")}/year) is being connected — we'll let you know the moment it opens.`)}>
+              Upgrade to Pro
+            </Button>
+          )}
+          {isPro && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" disabled={busy}>Cancel subscription</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Cancel your Pro subscription?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    You'll move to the free Basic plan immediately: no Verified badge, no top search placement, and your gallery is limited to 2 photos. Your listing and reviews stay live.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Keep Pro</AlertDialogCancel>
+                  <AlertDialogAction onClick={cancel}>Yes, cancel</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
+      </div>
+      <PlanCards onChoose={(p) => p === "pro" && !isPro && toast.info("Pro checkout is opening soon. We'll let you know.")} />
+    </div>
+  );
+}
+
+function PaymentOptionsForm({ userId, listing, onSaved }: { userId: string; listing: Listing; onSaved: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [qr, setQr] = useState<string | null>(listing.snapscan_qr_url);
+  const [methods, setMethods] = useState({
+    card: listing.accepts_card,
+    eft: listing.accepts_eft,
+    snapscan: listing.accepts_snapscan,
+    cash: listing.accepts_cash,
+  });
+
+  return (
+    <form
+      className="space-y-6 rounded-md border bg-card p-6"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        const f = new FormData(e.currentTarget);
+        const g = (k: string) => String(f.get(k) ?? "").trim();
+        setBusy(true);
+        const { error } = await supabase.from("listings").update({
+          bank_name: g("bank_name").slice(0, 80) || null,
+          account_number: g("account_number").slice(0, 40) || null,
+          branch_code: g("branch_code").slice(0, 20) || null,
+          payment_reference: g("payment_reference").slice(0, 80) || null,
+          payfast_link: g("payfast_link").slice(0, 300) || null,
+          snapscan_qr_url: qr,
+          accepts_card: methods.card,
+          accepts_eft: methods.eft,
+          accepts_snapscan: methods.snapscan,
+          accepts_cash: methods.cash,
+        }).eq("id", listing.id);
+        setBusy(false);
+        if (error) toast.error(error.message);
+        else { toast.success("Payment options saved."); onSaved(); }
+      }}
+    >
+      <div>
+        <h2 className="flex items-center gap-2 text-lg font-bold"><Landmark className="h-5 w-5 text-primary" /> Payment Options & Billing Details</h2>
+        <p className="mt-1 text-sm text-muted-foreground">This is how customers pay you for completed jobs. It's shown on your public listing.</p>
+      </div>
+
+      <fieldset className="rounded-md border p-4">
+        <legend className="px-1 text-sm font-semibold">Accepted payment methods</legend>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {([
+            ["card", "Card (Visa / Mastercard)"],
+            ["eft", "Instant EFT / Bank transfer"],
+            ["snapscan", "SnapScan / Zapper QR"],
+            ["cash", "Cash"],
+          ] as const).map(([key, label]) => (
+            <label key={key} className="flex items-center gap-2 text-sm">
+              <Checkbox checked={methods[key]} onCheckedChange={(v) => setMethods({ ...methods, [key]: v === true })} />
+              {label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset className="rounded-md border p-4">
+        <legend className="px-1 text-sm font-semibold">Bank EFT details</legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div><Label htmlFor="bank_name">Bank name</Label><Input id="bank_name" name="bank_name" placeholder="e.g. FNB" maxLength={80} defaultValue={listing.bank_name ?? ""} /></div>
+          <div><Label htmlFor="account_number">Account number</Label><Input id="account_number" name="account_number" maxLength={40} defaultValue={listing.account_number ?? ""} /></div>
+          <div><Label htmlFor="branch_code">Branch code</Label><Input id="branch_code" name="branch_code" placeholder="e.g. 250655" maxLength={20} defaultValue={listing.branch_code ?? ""} /></div>
+          <div><Label htmlFor="payment_reference">Reference format</Label><Input id="payment_reference" name="payment_reference" placeholder="e.g. Your name + invoice no." maxLength={80} defaultValue={listing.payment_reference ?? ""} /></div>
+        </div>
+      </fieldset>
+
+      <fieldset className="rounded-md border p-4">
+        <legend className="px-1 text-sm font-semibold">Direct payment links</legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="payfast_link">PayFast payment link</Label>
+            <Input id="payfast_link" name="payfast_link" placeholder="https://payfast.io/…" maxLength={300} defaultValue={listing.payfast_link ?? ""} />
+          </div>
+          <div>
+            <Label>SnapScan / Zapper QR code</Label>
+            <div className="mt-1 flex items-center gap-3">
+              {qr ? <img src={qr} alt="Payment QR code" className="h-16 w-16 rounded-md border object-contain" /> : <div className="flex h-16 w-16 items-center justify-center rounded-md border bg-muted"><QrCode className="h-6 w-6 text-muted-foreground" /></div>}
+              <Input type="file" accept="image/*" onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                try { setQr(await uploadMedia(userId, file)); } catch { toast.error("Upload failed. Try a smaller image."); }
+              }} />
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save payment options"}</Button>
+    </form>
   );
 }

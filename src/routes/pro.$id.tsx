@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Clock, Globe, Mail, MapPin, Phone, Share2 } from "lucide-react";
+import { Clock, Globe, Mail, MapPin, Phone, Share2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { initials, trackEvent } from "@/lib/directory";
 import { Stars, VerifiedBadge } from "@/components/directory/Stars";
+import { PaymentBadges, PaymentDetailsDialog, hasPaymentInfo } from "@/components/directory/PaymentBadges";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -145,6 +146,17 @@ function ProfilePage() {
               </Button>
             )}
           </div>
+          {hasPaymentInfo(l) && (
+            <div className="rounded-md border bg-card p-5">
+              <h2 className="flex items-center gap-2 font-semibold"><Wallet className="h-4 w-4 text-primary" /> Payment methods</h2>
+              <div className="mt-3">
+                <PaymentBadges listing={l} />
+              </div>
+              <div className="mt-3">
+                <PaymentDetailsDialog listing={l} businessName={l.business_name} />
+              </div>
+            </div>
+          )}
           <InquiryForm listingId={l.id} category={l.category} businessName={l.business_name} />
         </aside>
       </div>
