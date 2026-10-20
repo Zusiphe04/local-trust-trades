@@ -135,16 +135,12 @@ function Dashboard() {
           {reviews.length === 0 && <p className="text-sm text-muted-foreground">No reviews yet. Ask your happy customers to leave one.</p>}
         </TabsContent>
 
-        <TabsContent value="plan" className="mt-4">
-          <div className="rounded-md border bg-card p-6">
-            <h2 className="text-lg font-bold">You're on {isPro ? "Pro" : "Basic"}.</h2>
-            {!isPro && (
-              <p className="mt-1 text-sm text-muted-foreground">
-                Pro is R{PRO_PRICE}/month. Card checkout is not available yet. You can keep using Basic for free.
-              </p>
-            )}
-          </div>
-          <PlanCards onChoose={(p) => p === "pro" && !isPro && toast.info("Pro checkout is opening soon. We'll let you know.")} />
+        <TabsContent value="billing" className="mt-4">
+          <BillingTab listing={listing} isPro={isPro} onChange={refresh} />
+        </TabsContent>
+
+        <TabsContent value="payments" className="mt-4">
+          <PaymentOptionsForm userId={user.id} listing={listing} onSaved={refresh} />
         </TabsContent>
       </Tabs>
     </div>
