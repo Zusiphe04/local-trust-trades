@@ -80,6 +80,7 @@ export function QuoteWizard({ open, onOpenChange, listingId, category, businessN
     setBusy(false);
     if (error) toast.error("Couldn't send — please try again.");
     else setSent(true);
+    return undefined;
   }
 
   return (
