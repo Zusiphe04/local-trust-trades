@@ -6,3 +6,4 @@
 - [x] Billing & Subscription tab + provider payment options (EFT/SnapScan/PayFast) + customer payment badges
 - [ ] Live card checkout for Pro (blocked: built-in payments unavailable for ZA sellers; needs own Stripe/PayFast keys)
 - [ ] Tests and live flow verification
+- [ ] Hidden administrator panel with protected access and provider, listing, subscription, and analytics views
