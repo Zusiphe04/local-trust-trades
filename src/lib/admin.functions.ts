@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
 
-async function requireAdmin(supabase: Parameters<Parameters<typeof requireSupabaseAuth>[0]>[0] extends never ? never : any, userId: string) {
+async function requireAdmin(supabase: SupabaseClient<Database>, userId: string) {
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
   if (error || data?.role !== "admin") throw new Error("Administrator access required.");
 }
@@ -14,7 +16,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [roles, listings, inquiries, events, reviews] = await Promise.all([
       supabaseAdmin.from("user_roles").select("user_id, role, registration_complete"),
-      supabaseAdmin.from("listings").select("id, user_id, business_name, category, plan_type, is_featured, is_verified, verification_status, verification_identity_path, verification_business_path, moderation_status, is_flagged, subscription_status, next_billing_date, payment_method_label, accepts_eft, accepts_snapscan, accepts_card, accepts_cash, bank_name, account_number, branch_code, payment_reference, payfast_link, snapscan_qr_url, service_area, created_at"),
+      supabaseAdmin.from("listings").select("id, user_id, business_name, category, plan_type, is_featured, is_verified, verification_status, verification_identity_path, verification_business_path, moderation_status, is_flagged, subscription_status, next_billing_date, payment_method_label, accepts_eft, accepts_snapscan, accepts_card, accepts_cash, payfast_link, service_area, created_at"),
       supabaseAdmin.from("inquiries").select("id, created_at"),
       supabaseAdmin.from("listing_events").select("event_type, created_at"),
       supabaseAdmin.from("reviews").select("id, created_at"),
