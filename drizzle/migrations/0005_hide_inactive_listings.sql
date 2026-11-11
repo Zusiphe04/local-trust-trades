@@ -1,0 +1,1 @@
+ALTER POLICY "listings public read" ON public.listings TO anon, authenticated USING (moderation_status = 'active' OR auth.uid() = user_id);
