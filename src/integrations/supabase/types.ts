@@ -134,7 +134,10 @@ export type Database = {
           hours: string
           id: string
           is_featured: boolean
+          is_flagged: boolean
+          is_verified: boolean
           logo_url: string | null
+          moderation_status: string
           next_billing_date: string | null
           payfast_link: string | null
           payment_method_label: string | null
@@ -148,6 +151,9 @@ export type Database = {
           social_url: string | null
           subscription_status: string
           user_id: string | null
+          verification_business_path: string | null
+          verification_identity_path: string | null
+          verification_status: string
           website_url: string | null
         }
         Insert: {
@@ -167,7 +173,10 @@ export type Database = {
           hours?: string
           id?: string
           is_featured?: boolean
+          is_flagged?: boolean
+          is_verified?: boolean
           logo_url?: string | null
+          moderation_status?: string
           next_billing_date?: string | null
           payfast_link?: string | null
           payment_method_label?: string | null
@@ -181,6 +190,9 @@ export type Database = {
           social_url?: string | null
           subscription_status?: string
           user_id?: string | null
+          verification_business_path?: string | null
+          verification_identity_path?: string | null
+          verification_status?: string
           website_url?: string | null
         }
         Update: {
@@ -200,7 +212,10 @@ export type Database = {
           hours?: string
           id?: string
           is_featured?: boolean
+          is_flagged?: boolean
+          is_verified?: boolean
           logo_url?: string | null
+          moderation_status?: string
           next_billing_date?: string | null
           payfast_link?: string | null
           payment_method_label?: string | null
@@ -214,6 +229,9 @@ export type Database = {
           social_url?: string | null
           subscription_status?: string
           user_id?: string | null
+          verification_business_path?: string | null
+          verification_identity_path?: string | null
+          verification_status?: string
           website_url?: string | null
         }
         Relationships: []
