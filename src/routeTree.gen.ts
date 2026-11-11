@@ -17,6 +17,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as ProIdRouteImport } from './routes/pro.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -58,6 +59,11 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin/login',
+  path: '/admin/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProIdRoute = ProIdRouteImport.update({
   id: '/pro/$id',
   path: '/pro/$id',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/admin/login': typeof AdminLoginRoute
   '/pro/$id': typeof ProIdRoute
 }
 export interface FileRoutesByTo {
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/admin/login': typeof AdminLoginRoute
   '/pro/$id': typeof ProIdRoute
 }
 export interface FileRoutesById {
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/admin/login': typeof AdminLoginRoute
   '/pro/$id': typeof ProIdRoute
 }
 export interface FileRouteTypes {
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/dashboard'
     | '/onboarding'
+    | '/admin/login'
     | '/pro/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/dashboard'
     | '/onboarding'
+    | '/admin/login'
     | '/pro/$id'
   id:
     | '__root__'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/_authenticated/dashboard'
     | '/_authenticated/onboarding'
+    | '/admin/login'
     | '/pro/$id'
   fileRoutesById: FileRoutesById
 }
@@ -137,6 +149,7 @@ export interface RootRouteChildren {
   ForProsRoute: typeof ForProsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
+  AdminLoginRoute: typeof AdminLoginRoute
   ProIdRoute: typeof ProIdRoute
 }
 
@@ -198,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/admin/login': {
+      id: '/admin/login'
+      path: '/admin/login'
+      fullPath: '/admin/login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pro/$id': {
       id: '/pro/$id'
       path: '/pro/$id'
@@ -228,6 +248,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForProsRoute: ForProsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
+  AdminLoginRoute: AdminLoginRoute,
   ProIdRoute: ProIdRoute,
 }
 export const routeTree = rootRouteImport
