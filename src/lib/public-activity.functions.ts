@@ -20,7 +20,7 @@ const eventInput = z.object({
 
 function createPublicClient() {
   const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"];
+  const key = process.env["SUPABASE_ANON_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"];
   if (!url || !key) throw new Error("Public activity service is unavailable.");
   return createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -39,7 +39,8 @@ export const submitPublicInquiry = createServerFn({ method: "POST" })
     const client = createPublicClient();
     const { data: listing, error: listingError } = await client.from("listings").select("id").eq("id", data.listingId).eq("moderation_status", "active").maybeSingle();
     if (listingError || !listing) throw new Error("This listing is not available for quote requests.");
-    const { error } = await client.from("inquiries").insert({
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("inquiries").insert({
       listing_id: data.listingId,
       customer_name: data.customerName,
       customer_email: data.customerEmail,
@@ -58,7 +59,8 @@ export const recordPublicListingEvent = createServerFn({ method: "POST" })
     const client = createPublicClient();
     const { data: listing, error: listingError } = await client.from("listings").select("id").eq("id", data.listingId).eq("moderation_status", "active").maybeSingle();
     if (listingError || !listing) return { ok: false };
-    const { error } = await client.from("listing_events").insert({ listing_id: data.listingId, event_type: data.eventType });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("listing_events").insert({ listing_id: data.listingId, event_type: data.eventType });
     return { ok: !error };
   });
 
@@ -80,7 +82,8 @@ export const uploadPublicInquiryPhoto = createServerFn({ method: "POST" })
     if (listingError || !listing) throw new Error("This listing is not available for quote requests.");
     const extension = data.photo.name.split(".").pop()?.toLowerCase() ?? "jpg";
     const path = `inquiries/${crypto.randomUUID()}.${extension}`;
-    const { error } = await client.storage.from("listing-media").upload(path, data.photo, { contentType: data.photo.type, upsert: false });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.storage.from("listing-media").upload(path, data.photo, { contentType: data.photo.type, upsert: false });
     if (error) throw new Error("Photo upload failed. Try again or skip the photo.");
     return { path };
   });
