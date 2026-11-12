@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PRO_PRICE, PRO_ANNUAL_PRICE, getUserRole, uploadMedia, type Listing } from "@/lib/directory";
 import { cancelSubscription } from "@/lib/billing.functions";
 import { PlanCards } from "@/routes/for-pros";
+import { VerificationUpload } from "@/components/directory/VerificationUpload";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -99,6 +100,7 @@ function Dashboard() {
           <TabsTrigger value="reviews">Reviews{reviews.length ? ` (${reviews.length})` : ""}</TabsTrigger>
           <TabsTrigger value="billing">Billing & Subscription</TabsTrigger>
           <TabsTrigger value="payments">Payment options</TabsTrigger>
+          <TabsTrigger value="verification">Business verification</TabsTrigger>
         </TabsList>
 
         <TabsContent value="leads" className="mt-4 space-y-4">
@@ -141,6 +143,17 @@ function Dashboard() {
 
         <TabsContent value="payments" className="mt-4">
           <PaymentOptionsForm userId={user.id} listing={listing} onSaved={refresh} />
+        </TabsContent>
+
+        <TabsContent value="verification" className="mt-4">
+          <VerificationUpload
+            userId={user.id}
+            listingId={listing.id}
+            status={listing.verification_status as "incomplete" | "pending" | "approved" | "rejected"}
+            identityPath={listing.verification_identity_path}
+            businessPath={listing.verification_business_path}
+            onSaved={refresh}
+          />
         </TabsContent>
       </Tabs>
     </div>
@@ -339,7 +352,7 @@ function BillingTab({ listing, isPro, onChange }: { listing: Listing; isPro: boo
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <CreditCard className="h-5 w-5 text-primary" /> Billing & Subscription
           </h2>
-          {isPro && <VerifiedBadge />}
+            {listing.is_verified && <VerifiedBadge />}
         </div>
         <dl className="mt-4 grid gap-4 sm:grid-cols-3">
           <div className="rounded-md border bg-muted p-4">

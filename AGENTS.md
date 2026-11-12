@@ -12,3 +12,4 @@
 - Keep market constants and validation in `src/lib/localization.ts` so every pricing and account surface shares the same rules.
 - Authorize customer/provider access from protected `public.user_roles`; account type is selected once through the registration RPC, never mutable profile metadata.
 - Render secondary-page Back navigation in the root shell so all secondary screens receive it consistently.
+- Keep administrator routes hidden from public navigation; every admin server function must verify `public.user_roles.role = 'admin'` before loading the privileged client, because route guards alone do not protect server calls.

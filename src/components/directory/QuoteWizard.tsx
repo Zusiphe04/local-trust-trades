@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { saPhoneSchema } from "@/lib/localization";
+import { useServerFn } from "@tanstack/react-start";
+import { submitPublicInquiry, uploadPublicInquiryPhoto } from "@/lib/public-activity.functions";
 
 type Q = { key: string; label: string; options?: string[]; kind?: "text" | "photo"; optional?: boolean };
 
@@ -37,6 +39,8 @@ export function QuoteWizard({ open, onOpenChange, listingId, category, businessN
   open: boolean; onOpenChange: (o: boolean) => void; listingId: string; category: string; businessName: string;
 }) {
   const steps: Q[][] = [...categoryQuestions(category).map((q) => [q]), GENERAL, []]; // last = contact details
+  const submitInquiry = useServerFn(submitPublicInquiry);
+  const uploadPhoto = useServerFn(uploadPublicInquiryPhoto);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [photo, setPhoto] = useState<File | null>(null);
@@ -62,21 +66,32 @@ export function QuoteWizard({ open, onOpenChange, listingId, category, businessN
       if (photo.size > 8e6 || !["jpg", "jpeg", "png", "webp", "heic", "gif"].includes(ext)) {
         setBusy(false); return toast.error("Photo must be a JPG, PNG or WebP under 8 MB.");
       }
-      photo_path = `inquiries/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage.from("listing-media").upload(photo_path, photo, { contentType: photo.type });
-      if (error) { setBusy(false); return toast.error("Photo upload failed — try again or skip the photo."); }
+      const uploadData = new FormData();
+      uploadData.set("listingId", listingId);
+      uploadData.set("photo", photo);
+      try {
+        const result = await uploadPhoto({ data: uploadData });
+        photo_path = result.path;
+      } catch {
+        setBusy(false); return toast.error("Photo upload failed — try again or skip the photo.");
+      }
     }
     const clean = Object.fromEntries(Object.entries(answers).map(([k, v]) => [k, v.trim().slice(0, 300)]).filter(([, v]) => v));
     const summary = Object.entries(clean).map(([k, v]) => `${k}: ${v}`).join(" | ");
-    const { error } = await supabase.from("inquiries").insert({
-      listing_id: listingId,
-      customer_name: name.slice(0, 100),
-      customer_email: email.slice(0, 255),
-      customer_phone: phone.slice(0, 40) || null,
-      message: (c.message.trim() || summary || "Quote request").slice(0, 2000),
-      answers: clean,
-      photo_path,
-    });
+    let error = false;
+    try {
+      await submitInquiry({ data: {
+        listingId,
+        customerName: name.slice(0, 100),
+        customerEmail: email.slice(0, 255),
+        customerPhone: phone.slice(0, 40) || null,
+        message: (c.message.trim() || summary || "Quote request").slice(0, 2000),
+        answers: clean,
+        photoPath: photo_path,
+      } });
+    } catch {
+      error = true;
+    }
     setBusy(false);
     if (error) toast.error("Couldn't send — please try again.");
     else setSent(true);

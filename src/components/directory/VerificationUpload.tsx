@@ -32,8 +32,10 @@ export function VerificationUpload({ userId, listingId, status, identityPath, bu
     try {
       const { error: uploadError } = await supabase.storage.from("listing-media").upload(path, file, { contentType: file.type, upsert: true });
       if (uploadError) throw uploadError;
-      const field = kind === "identity" ? "verification_identity_path" : "verification_business_path";
-      const { error } = await supabase.from("listings").update({ [field]: path }).eq("id", listingId);
+      const updateResult = kind === "identity"
+        ? await supabase.from("listings").update({ verification_identity_path: path }).eq("id", listingId)
+        : await supabase.from("listings").update({ verification_business_path: path }).eq("id", listingId);
+      const { error } = updateResult;
       if (error) throw error;
       toast.success("Document submitted for verification.");
       onSaved();

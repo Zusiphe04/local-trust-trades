@@ -6,7 +6,7 @@ import { initials, trackEvent, type Listing } from "@/lib/directory";
 import { cn } from "@/lib/utils";
 
 export function ListingCard({ listing, featured }: { listing: Listing; featured?: boolean }) {
-  const isPro = listing.plan_type === "pro";
+  const isPro = listing.is_verified;
   return (
     <article
       className={cn(

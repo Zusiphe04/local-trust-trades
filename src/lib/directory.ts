@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
+import { recordPublicListingEvent } from "@/lib/public-activity.functions";
 
 export type Listing = Database["public"]["Tables"]["listings"]["Row"];
 export type Review = Database["public"]["Tables"]["reviews"]["Row"];
@@ -7,7 +8,7 @@ export type Review = Database["public"]["Tables"]["reviews"]["Row"];
 export { CATEGORIES, PRO_PRICE, PRO_ANNUAL_PRICE } from "./localization";
 
 export function trackEvent(listingId: string, type: "view" | "phone_click" | "email_click" | "website_click") {
-  void supabase.from("listing_events").insert({ listing_id: listingId, event_type: type });
+  void recordPublicListingEvent({ data: { listingId, eventType: type } });
 }
 
 /** Upload to the private media bucket and return a long-lived signed URL. */

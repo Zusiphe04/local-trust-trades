@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -34,12 +35,16 @@ export const getAdminOverview = createServerFn({ method: "GET" })
 
 export const updateAdminListing = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { listingId: string; action: "approve" | "reject" | "upgrade" | "downgrade" | "verified" | "flagged" | "moderation"; value?: string | boolean }) => input)
+  .inputValidator((input: unknown) => z.object({
+    listingId: z.string().uuid(),
+    action: z.enum(["approve", "reject", "upgrade", "downgrade", "verified", "flagged", "moderation"]),
+    value: z.union([z.string(), z.boolean()]).optional(),
+  }).strict().parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await requireAdmin(supabase, userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    let update: Record<string, string | boolean | null>;
+    let update: Database["public"]["Tables"]["listings"]["Update"];
     switch (data.action) {
       case "approve": update = { verification_status: "approved", is_verified: true }; break;
       case "reject": update = { verification_status: "rejected", is_verified: false }; break;
