@@ -18,6 +18,10 @@ const eventInput = z.object({
   eventType: z.enum(["view", "phone_click", "email_click", "website_click"]),
 });
 
+const signedPhotoInput = z.object({
+  photoPath: z.string().regex(/^inquiries\/[0-9a-f-]{36}\.(jpg|jpeg|png|webp|heic|gif)$/),
+});
+
 function createPublicClient() {
   const url = process.env["SUPABASE_URL"];
   const key = process.env["SUPABASE_ANON_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"];
@@ -86,4 +90,13 @@ export const uploadPublicInquiryPhoto = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.storage.from("listing-media").upload(path, data.photo, { contentType: data.photo.type, upsert: false });
     if (error) throw new Error("Photo upload failed. Try again or skip the photo.");
     return { path };
+  });
+
+export const getPublicInquiryPhotoUrl = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => signedPhotoInput.parse(input))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed, error } = await supabaseAdmin.storage.from("listing-media").createSignedUrl(data.photoPath, 60 * 60);
+    if (error || !signed) return { url: null };
+    return { url: signed.signedUrl };
   });
