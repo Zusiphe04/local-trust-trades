@@ -17,8 +17,6 @@ import { PRO_PRICE, PRO_ANNUAL_PRICE, getUserRole, uploadMedia, type Listing } f
 import { cancelSubscription } from "@/lib/billing.functions";
 import { PlanCards } from "@/routes/for-pros";
 import { VerificationUpload } from "@/components/directory/VerificationUpload";
-import { useServerFn } from "@tanstack/react-start";
-import { getPublicInquiryPhotoUrl } from "@/lib/public-activity.functions";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -167,12 +165,11 @@ function LeadCard({ lead, businessName }: { lead: Lead; businessName: string }) 
   const answers = (lead.answers && typeof lead.answers === "object" ? lead.answers : {}) as Record<string, string>;
   const entries = Object.entries(answers);
   const summary = entries.map(([k, v]) => `${k}: ${v}`).join(" | ");
-  const getPhotoUrl = useServerFn(getPublicInquiryPhotoUrl);
   const { data: photoUrl } = useQuery({
     queryKey: ["lead-photo", lead.photo_path],
     enabled: !!lead.photo_path,
     staleTime: 30 * 60e3,
-    queryFn: async () => lead.photo_path ? (await getPhotoUrl({ data: { photoPath: lead.photo_path } })).url : null,
+    queryFn: async () => lead.photo_path ? (await supabase.storage.from("listing-media").createSignedUrl(lead.photo_path, 3600)).data?.signedUrl ?? null : null,
   });
   const first = lead.customer_name.split(" ")[0];
   const job = answers["Job Type"] || answers["Task"] || "your job";
