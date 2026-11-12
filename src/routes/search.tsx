@@ -52,7 +52,7 @@ function SearchPage() {
       if (s.loc) qb = qb.ilike("service_area", `%${clean(s.loc)}%`);
       if (s.cat) qb = qb.eq("category", s.cat);
       if (s.rating4) qb = qb.gte("rating", 4);
-      if (s.verified) qb = qb.eq("plan_type", "pro");
+      if (s.verified) qb = qb.eq("is_verified", true);
       const { data, error } = await qb.order("rating", { ascending: false }).limit(100);
       if (error) throw error;
       return data;

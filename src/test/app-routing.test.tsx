@@ -14,4 +14,11 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it("matches the hidden administrator sign-in and dashboard pages", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+
+    expect(router.matchRoutes("/admin/login").at(-1)?.routeId).toBe("/admin/login");
+    expect(router.matchRoutes("/admin/dashboard").at(-1)?.routeId).toBe("/admin/dashboard");
+  });
 });
