@@ -100,6 +100,7 @@ function Dashboard() {
           <TabsTrigger value="reviews">Reviews{reviews.length ? ` (${reviews.length})` : ""}</TabsTrigger>
           <TabsTrigger value="billing">Billing & Subscription</TabsTrigger>
           <TabsTrigger value="payments">Payment options</TabsTrigger>
+          <TabsTrigger value="verification">Business verification</TabsTrigger>
         </TabsList>
 
         <TabsContent value="leads" className="mt-4 space-y-4">
@@ -351,7 +352,7 @@ function BillingTab({ listing, isPro, onChange }: { listing: Listing; isPro: boo
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <CreditCard className="h-5 w-5 text-primary" /> Billing & Subscription
           </h2>
-          {isPro && <VerifiedBadge />}
+            {listing.is_verified && <VerifiedBadge />}
         </div>
         <dl className="mt-4 grid gap-4 sm:grid-cols-3">
           <div className="rounded-md border bg-muted p-4">

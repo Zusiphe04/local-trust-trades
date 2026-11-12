@@ -27,6 +27,7 @@ function AdminLogin() {
   async function checkAdmin(userId: string) {
     const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle();
     if (error || data?.role !== "admin") {
+      await supabase.auth.signOut();
       toast.error("This account does not have administrator access.");
       return false;
     }

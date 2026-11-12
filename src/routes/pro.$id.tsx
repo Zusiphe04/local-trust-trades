@@ -54,6 +54,7 @@ function ProfilePage() {
       </div>
     );
   const isPro = l.plan_type === "pro";
+  const isVerified = l.is_verified;
   const gallery = isPro ? data.gallery : data.gallery.slice(0, 2);
 
   return (
@@ -74,7 +75,7 @@ function ProfilePage() {
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
             <h1 className="text-3xl font-bold">{l.business_name}</h1>
-            {isPro && <VerifiedBadge />}
+            {isVerified && <VerifiedBadge />}
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
