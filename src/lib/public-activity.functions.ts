@@ -22,10 +22,7 @@ const signedPhotoInput = z.object({
   photoPath: z.string().regex(/^inquiries\/[0-9a-f-]{36}\.(jpg|jpeg|png|webp|heic|gif)$/),
 });
 
-function createPublicClient() {
-  const url = process.env["SUPABASE_URL"];
-  const key = process.env["SUPABASE_ANON_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"];
-  if (!url || !key) throw new Error("Public activity service is unavailable.");
+function createPublicClient(url: string, key: string) {
   return createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { fetch: (input, init) => {
@@ -40,7 +37,10 @@ function createPublicClient() {
 export const submitPublicInquiry = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => inquiryInput.parse(input))
   .handler(async ({ data }) => {
-    const client = createPublicClient();
+    const url = process.env["SUPABASE_URL"];
+    const key = process.env["SUPABASE_ANON_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"];
+    if (!url || !key) throw new Error("Public activity service is unavailable.");
+    const client = createPublicClient(url, key);
     const { data: listing, error: listingError } = await client.from("listings").select("id").eq("id", data.listingId).eq("moderation_status", "active").maybeSingle();
     if (listingError || !listing) throw new Error("This listing is not available for quote requests.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -60,7 +60,10 @@ export const submitPublicInquiry = createServerFn({ method: "POST" })
 export const recordPublicListingEvent = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => eventInput.parse(input))
   .handler(async ({ data }) => {
-    const client = createPublicClient();
+    const url = process.env["SUPABASE_URL"];
+    const key = process.env["SUPABASE_ANON_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"];
+    if (!url || !key) throw new Error("Public activity service is unavailable.");
+    const client = createPublicClient(url, key);
     const { data: listing, error: listingError } = await client.from("listings").select("id").eq("id", data.listingId).eq("moderation_status", "active").maybeSingle();
     if (listingError || !listing) return { ok: false };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -81,7 +84,10 @@ export const uploadPublicInquiryPhoto = createServerFn({ method: "POST" })
     return { listingId, photo };
   })
   .handler(async ({ data }) => {
-    const client = createPublicClient();
+    const url = process.env["SUPABASE_URL"];
+    const key = process.env["SUPABASE_ANON_KEY"] ?? process.env["SUPABASE_PUBLISHABLE_KEY"];
+    if (!url || !key) throw new Error("Public activity service is unavailable.");
+    const client = createPublicClient(url, key);
     const { data: listing, error: listingError } = await client.from("listings").select("id").eq("id", data.listingId).eq("moderation_status", "active").maybeSingle();
     if (listingError || !listing) throw new Error("This listing is not available for quote requests.");
     const extension = data.photo.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -90,13 +96,4 @@ export const uploadPublicInquiryPhoto = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.storage.from("listing-media").upload(path, data.photo, { contentType: data.photo.type, upsert: false });
     if (error) throw new Error("Photo upload failed. Try again or skip the photo.");
     return { path };
-  });
-
-export const getPublicInquiryPhotoUrl = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => signedPhotoInput.parse(input))
-  .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: signed, error } = await supabaseAdmin.storage.from("listing-media").createSignedUrl(data.photoPath, 60 * 60);
-    if (error || !signed) return { url: null };
-    return { url: signed.signedUrl };
   });
