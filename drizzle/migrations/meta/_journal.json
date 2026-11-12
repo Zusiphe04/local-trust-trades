@@ -43,6 +43,13 @@
       "when": 1794360559766,
       "tag": "0005_hide_inactive_listings",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794444272079,
+      "tag": "0006_restrict_public_inquiry_event_and_photo_writes",
+      "breakpoints": true
     }
   ]
 }
